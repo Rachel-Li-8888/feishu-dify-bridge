@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "pages/api/webhook.js": {
+      "regions": ["sin1"]
+    }
+  }
+}
