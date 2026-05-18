@@ -1,5 +1,20 @@
 import axios from 'axios'
 
+const REPORT_KEYWORDS = ['生成报告', '导出报告', '生成分析报告', '生成投诉报告', '下载报告', '生成月报']
+
+function isReportRequest(text) {
+  return REPORT_KEYWORDS.some(kw => text.includes(kw))
+}
+
+async function generateReport() {
+  const res = await axios.post(
+    'https://feishu-dify-bridge.vercel.app/api/generate-report',
+    {},
+    { timeout: 120000 }
+  )
+  return res.data
+}
+
 async function getTenantAccessToken() {
   const res = await axios.post(
     'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
@@ -77,11 +92,17 @@ export default async function handler(req, res) {
     res.status(200).json({ ok: true })
 
     try {
-      const [difyAnswer, token] = await Promise.all([
-        callDify(userQuery),
-        getTenantAccessToken(),
-      ])
-      await replyFeishu(messageId, difyAnswer, token)
+      const token = await getTenantAccessToken()
+      if (isReportRequest(userQuery)) {
+        const report = await generateReport()
+        const replyText = report.success
+          ? `📊 报告已生成！${report.message}\n\n下载链接：${report.downloadUrl}`
+          : `报告生成失败：${report.error}`
+        await replyFeishu(messageId, replyText, token)
+      } else {
+        const difyAnswer = await callDify(userQuery)
+        await replyFeishu(messageId, difyAnswer, token)
+      }
     } catch (err) {
       console.error('转发失败:', err?.response?.data || err.message)
     }
