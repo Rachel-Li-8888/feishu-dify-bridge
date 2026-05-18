@@ -54,19 +54,23 @@ export default async function handler(req, res) {
     const rows = rawRecords.map(r => {
       const f = r.fields
       return {
-        orderId: getField(f, '工单号 Work Order ID'),
-        date: getField(f, '创建日期 Created Date'),
-        product: getField(f, '产品型号 Product Variant'),
+        orderId: getField(f, '工单编号 Work Number'),
+        date: getField(f, '创建日期 Time'),
+        varian: getField(f, '产品系列 Varian'),
+        productCategory: getField(f, '产品类别 Product Category'),
+        brand: getField(f, '品牌 Brand'),
         factory: getField(f, '生产工厂 Factory'),
-        batchNo: getField(f, '机台号 Machine/Batch No'),
-        level1: getField(f, '投诉类型一级目录 L1 Complaint Category'),
-        level3: getField(f, '投诉类型三级目录 L3 Complaint Category'),
-        sensitivity: getField(f, '灵敏度 Sensitivity Level'),
-        handling: getField(f, '处理意见 Handling Opinion'),
+        batchNo: getField(f, '生产批号喷码 Production Batch Number'),
+        level1: getField(f, '一级目录 First level directory'),
+        level2: getField(f, '二级目录 Secondary directory'),
+        level3: getField(f, '三级目录 Third-level directory'),
+        sensitivity: getField(f, '敏感级别  Sensitivity Level'),
+        handling: getField(f, '处理意见 Handing Opinion Copy'),
         province: getField(f, '省份 Province'),
         city: getField(f, '城市 City'),
         contactChannel: getField(f, '接触渠道 Contact Channel'),
         purchaseChannel: getField(f, '购买渠道 Purchase Channel'),
+        description: getField(f, '情况描述 Situation Description'),
       }
     })
 
