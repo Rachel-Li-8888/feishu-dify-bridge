@@ -280,10 +280,18 @@ async function generateExcel(rows) {
 // 上传 Excel 到飞书云盘
 async function uploadToFeishu(buffer, token) {
   const fileName = `投诉分析报告_${new Date().toISOString().slice(0, 10)}.xlsx`
+
+  // 获取云盘根目录 token
+  const rootRes = await axios.get(
+    'https://open.feishu.cn/open-apis/drive/explorer/v2/root_folder/meta',
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  const rootToken = rootRes.data.data.token
+
   const form = new FormData()
   form.append('file_name', fileName)
   form.append('parent_type', 'explorer')
-  form.append('parent_node', process.env.FEISHU_FOLDER_TOKEN)
+  form.append('parent_node', rootToken)
   form.append('size', buffer.length)
   form.append('file', Buffer.from(buffer), {
     filename: fileName,
@@ -303,18 +311,14 @@ async function uploadToFeishu(buffer, token) {
 
   const fileToken = res.data.data.file_token
 
-  // 创建分享链接
-  const shareRes = await axios.post(
-    'https://open.feishu.cn/open-apis/drive/permission/v2/public',
-    {
-      token: fileToken,
-      type: 'file',
-      link_share_entity: 'tenant_readable',
-    },
-    { headers: { Authorization: `Bearer ${token}` } }
+  // 设置文件对组织内所有人可读
+  await axios.patch(
+    `https://open.feishu.cn/open-apis/drive/v1/permissions/${fileToken}/public?type=file`,
+    { external_access_entity: 'open', link_share_entity: 'tenant_readable' },
+    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
   )
 
-  const shareUrl = `https://bytedance.feishu.cn/file/${fileToken}`
+  const shareUrl = `https://feishu.cn/file/${fileToken}`
   return { fileToken, shareUrl, fileName }
 }
 
