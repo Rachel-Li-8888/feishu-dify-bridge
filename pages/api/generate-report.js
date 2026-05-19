@@ -385,7 +385,7 @@ export default async function handler(req, res) {
       rows.reduce((acc, r) => { acc[r.province || '未知'] = (acc[r.province || '未知'] || 0) + 1; return acc }, {})
     ).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
-    const reportUrl = 'https://feishu-dify-bridge.vercel.app/report'
+    const reportUrl = 'https://v3-indonesia.makuku.com/quality/report'
 
     const summaryText = `📊 **投诉分析报告已生成**
 
