@@ -281,8 +281,12 @@ async function generateExcel(rows) {
 async function uploadToFeishu(buffer, token) {
   const fileName = `投诉分析报告_${new Date().toISOString().slice(0, 10)}.xlsx`
 
-  // 指定上传到质量投诉报告文件夹
-  const rootToken = 'Gi82fgzQplFcdvd3YI5cch1Hnbc'
+  // 获取云盘根目录 token
+  const rootRes = await axios.get(
+    'https://open.feishu.cn/open-apis/drive/explorer/v2/root_folder/meta',
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  const rootToken = rootRes.data.data.token
 
   const form = new FormData()
   form.append('file_name', fileName)
