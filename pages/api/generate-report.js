@@ -278,41 +278,15 @@ async function generateExcel(rows) {
 }
 
 // 上传 Excel 到飞书云盘
-// 获取或创建「质量投诉报告」文件夹
-async function getOrCreateReportFolder(token) {
-  // 获取根目录 token
+async function uploadToFeishu(buffer, token) {
+  const fileName = `投诉分析报告_${new Date().toISOString().slice(0, 10)}.xlsx`
+
+  // 获取云盘根目录 token
   const rootRes = await axios.get(
     'https://open.feishu.cn/open-apis/drive/explorer/v2/root_folder/meta',
     { headers: { Authorization: `Bearer ${token}` } }
   )
-  const rootToken = rootRes.data.data.token
-
-  // 列出根目录下的子文件夹，找「质量投诉报告」
-  const listRes = await axios.get(
-    `https://open.feishu.cn/open-apis/drive/explorer/v2/folder/${rootToken}/children`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { types: 'folder' },
-    }
-  )
-  const children = listRes.data.data?.children || []
-  const existing = children.find(c => c.name === '质量投诉报告')
-  if (existing) return existing.token
-
-  // 不存在则创建
-  const createRes = await axios.post(
-    `https://open.feishu.cn/open-apis/drive/explorer/v2/folder/${rootToken}`,
-    { name: '质量投诉报告' },
-    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-  )
-  return createRes.data.data.token
-}
-
-async function uploadToFeishu(buffer, token) {
-  const fileName = `投诉分析报告_${new Date().toISOString().slice(0, 10)}.xlsx`
-
-  // 获取或创建「质量投诉报告」文件夹
-  const folderToken = await getOrCreateReportFolder(token)
+  const folderToken = rootRes.data.data.token
 
   const form = new FormData()
   form.append('file_name', fileName)
