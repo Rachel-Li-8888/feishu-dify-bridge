@@ -111,6 +111,7 @@ export default async function handler(req, res) {
   // 命中缓存直接返回
   const now = Date.now()
   if (_cache && (now - _cacheTime) < CACHE_TTL) {
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60')
     res.setHeader('X-Cache', 'HIT')
     return res.status(200).json(_cache)
   }
@@ -123,6 +124,8 @@ export default async function handler(req, res) {
     _cache = stats
     _cacheTime = now
 
+    // Vercel CDN 缓存 5 分钟，过期后后台自动刷新
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60')
     res.setHeader('X-Cache', 'MISS')
     return res.status(200).json(stats)
   } catch (err) {
