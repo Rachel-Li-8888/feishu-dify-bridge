@@ -385,6 +385,8 @@ export default async function handler(req, res) {
       rows.reduce((acc, r) => { acc[r.province || '未知'] = (acc[r.province || '未知'] || 0) + 1; return acc }, {})
     ).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
+    const reportUrl = 'https://feishu-dify-bridge.vercel.app/report'
+
     const summaryText = `📊 **投诉分析报告已生成**
 
 **📌 核心指标**
@@ -404,7 +406,10 @@ ${topFactory.map((v, i) => `${i + 1}. ${v[0]}：${v[1]} 条`).join('\n')}
 **📍 投诉省份 TOP5**
 ${topProvince.map((v, i) => `${i + 1}. ${v[0]}：${v[1]} 条`).join('\n')}
 
-📥 **下载完整Excel报告（含8个分析Sheet）：**
+🌐 **查看完整可视化报告（含图表）：**
+${reportUrl}
+
+📥 **下载 Excel 原始报告：**
 ${shareUrl}`
 
     return res.status(200).json({
@@ -412,6 +417,7 @@ ${shareUrl}`
       message: `报告生成成功，共 ${rows.length} 条数据`,
       fileName,
       downloadUrl: shareUrl,
+      reportUrl,
       summaryText,
     })
   } catch (err) {
