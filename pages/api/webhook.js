@@ -101,7 +101,7 @@ export default async function handler(req) {
         if (isReportRequest(userQuery)) {
           const report = await generateReport()
           const replyText = report.success
-            ? `📊 报告已生成！${report.message}\n\n下载链接：${report.downloadUrl}`
+            ? (report.summaryText || `📊 报告已生成！${report.message}\n\n下载链接：${report.downloadUrl}`)
             : `报告生成失败：${report.error}`
           await replyFeishu(messageId, replyText, token)
         } else {

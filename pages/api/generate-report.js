@@ -361,11 +361,58 @@ export default async function handler(req, res) {
     const buffer = await generateExcel(rows)
     const { shareUrl, fileName } = await uploadToFeishu(buffer, token)
 
+    // 生成文字摘要
+    const total = rows.length
+    const majorCount = rows.filter(r => r.sensitivity === 'Major').length
+    const compensationCount = rows.filter(r =>
+      (r.handlingOpinion || '').includes('赔偿') ||
+      (r.handlingOpinion || '').toLowerCase().includes('compensation')
+    ).length
+
+    const topVarians = Object.entries(
+      rows.reduce((acc, r) => { acc[r.varian || '未知'] = (acc[r.varian || '未知'] || 0) + 1; return acc }, {})
+    ).sort((a, b) => b[1] - a[1]).slice(0, 3)
+
+    const topL1 = Object.entries(
+      rows.reduce((acc, r) => { acc[r.l1 || '未知'] = (acc[r.l1 || '未知'] || 0) + 1; return acc }, {})
+    ).sort((a, b) => b[1] - a[1]).slice(0, 3)
+
+    const topFactory = Object.entries(
+      rows.reduce((acc, r) => { acc[r.factory || '未知'] = (acc[r.factory || '未知'] || 0) + 1; return acc }, {})
+    ).sort((a, b) => b[1] - a[1]).slice(0, 3)
+
+    const topProvince = Object.entries(
+      rows.reduce((acc, r) => { acc[r.province || '未知'] = (acc[r.province || '未知'] || 0) + 1; return acc }, {})
+    ).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
+    const summaryText = `📊 **投诉分析报告已生成**
+
+**📌 核心指标**
+• 总投诉工单：${total} 条
+• Major 级别：${majorCount} 条（${(majorCount / total * 100).toFixed(1)}%）
+• 赔偿处理：${compensationCount} 条（${(compensationCount / total * 100).toFixed(1)}%）
+
+**🏷️ 投诉产品线 TOP3**
+${topVarians.map((v, i) => `${i + 1}. ${v[0]}：${v[1]} 条（${(v[1] / total * 100).toFixed(1)}%）`).join('\n')}
+
+**📋 一级投诉类型 TOP3**
+${topL1.map((v, i) => `${i + 1}. ${v[0]}：${v[1]} 条（${(v[1] / total * 100).toFixed(1)}%）`).join('\n')}
+
+**🏭 工厂投诉量 TOP3**
+${topFactory.map((v, i) => `${i + 1}. ${v[0]}：${v[1]} 条`).join('\n')}
+
+**📍 投诉省份 TOP5**
+${topProvince.map((v, i) => `${i + 1}. ${v[0]}：${v[1]} 条`).join('\n')}
+
+📥 **下载完整Excel报告（含8个分析Sheet）：**
+${shareUrl}`
+
     return res.status(200).json({
       success: true,
       message: `报告生成成功，共 ${rows.length} 条数据`,
       fileName,
       downloadUrl: shareUrl,
+      summaryText,
     })
   } catch (err) {
     console.error('生成报告失败:', err?.response?.data || err.message)
