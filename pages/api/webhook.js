@@ -6,14 +6,39 @@ function isReportRequest(text) {
   return REPORT_KEYWORDS.some(kw => text.includes(kw))
 }
 
+// 自动计算最近 12 个月的起止月份
+function getRecentMonthRange() {
+  const now = new Date()
+  const end = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+  const start = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`
+  return { startMonth: start, endMonth: end }
+}
+
 async function generateReport() {
-  const res = await fetch('https://feishu-dify-bridge.vercel.app/api/generate-report', {
+  const { startMonth, endMonth } = getRecentMonthRange()
+  const backendUrl = process.env.BACKEND_URL || 'https://zhihui-api.makuku.com'
+
+  const res = await fetch(`${backendUrl}/quality/anon/generateReport`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: '{}',
+    body: JSON.stringify({ startMonth, endMonth }),
     signal: AbortSignal.timeout(120000),
   })
-  return res.json()
+  const data = await res.json()
+
+  // Java 后端返回格式：{ code: 200, data: { url, summary } }
+  const vo = data.data || {}
+  const reportUrl = vo.url ? `${backendUrl}${vo.url}` : null
+  const success = res.ok && data.code === 200
+
+  return {
+    success,
+    summaryText: success && vo.summary
+      ? `${vo.summary}\n\n🌐 查看可视化报告：${reportUrl}`
+      : `报告生成失败：${data.msg || '未知错误'}`,
+    error: data.msg,
+  }
 }
 
 async function getTenantAccessToken() {
